@@ -22,13 +22,12 @@ To get started Theres a few things that need to be changed but first, Lets start
 ```bash
   npm i
 ```
-This will install all needed modules After this, Go to index.js, You will need to change the twitch channel name (This is the channel it looks for the commands to be ran in the chat) this can be found on line 5. After this edit line 8 with the scene names. Once thats all done, you can run the script using the following command
+This will install all needed modules After this, rename example.config.json to config.json and change the values to what you need. Please note the interval is in minutes, this is for auto scene switching, CommandCooldown is in seconds. this is how fast commands can be ran to manually change scenes. After you have changed everything needed. you can start it with the following line
 ```bash
   node index.js
 ```
 
 That's it! its now up and running, Give it a test by running !scene and then the scene name in your twitch chat, or run !random (This selects a random scene) and then run !scene to switch to it!
-!auto will automatically change scenes every x minutes (default is 30minutes per scene), Run !auto again to disable it and leave on current scene
 ## Roadmap
 
 - Add a channel points system so that users can pay using channel points to swap the scenes (With options to enable and disable this)
