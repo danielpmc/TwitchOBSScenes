@@ -67,7 +67,7 @@ function isPausedByTime() {
 // Twitch chat listener
 client.on('chat', async (channel, userstate, message, self) => {
   // Log message (optional)
-  console.log(userstate);
+  //console.log(userstate);
 
   // Check for cooldown and permissions
   if (Date.now() / 1000 < commandLastUsed + COMMAND_COOLDOWN) return;
