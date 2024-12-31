@@ -20,6 +20,10 @@ let enableRandom = false; // Initially disabled
 let autoSceneEnabled = false; // Initially disabled
 let autoSceneInterval; // Variable to store the interval ID
 
+// Config for pause functionality
+const PAUSE_START_TIME = config.AutoSwitchPauseTime; // Preset pause start time in HH:MM format
+const PAUSE_END_TIME = config.AutoSwitchPauseEnd; // Preset pause end time in HH:MM format 
+
 async function getRandomScene() {
   const randomIndex = Math.floor(Math.random() * sceneNames.length);
   return sceneNames[randomIndex];
@@ -41,11 +45,23 @@ async function swapScene(scene) {
 
 // Function for auto scene switching
 async function autoSceneSwitch() {
-  if (autoSceneEnabled) { 
+  if (autoSceneEnabled && !isPausedByTime()) { 
     const scene = await getRandomScene(); // Choose a random scene
     await swapScene(scene);
     console.log(`[OBS] (log): Auto scene switching to ${scene}`);
   }
+}
+
+function isPausedByTime() {
+  const currentTime = new Date();
+  const currentHour = currentTime.getHours().toString().padStart(2, '0');
+  const currentMinute = currentTime.getMinutes().toString().padStart(2, '0');
+  const startTime = PAUSE_START_TIME.split(':');
+  const endTime = PAUSE_END_TIME.split(':');
+
+  // Check if current time is within the pause window
+  return (currentHour >= startTime[0] && currentHour <= endTime[0] &&
+         currentMinute >= startTime[1] && currentMinute <= endTime[1]);
 }
 
 // Twitch chat listener
