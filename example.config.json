@@ -4,5 +4,7 @@
   "scenes": ["1", "2"],
   "commandCooldown": 5,
   "interval": 30,
-  "obsws": "ws://localhost:4444"
+  "obsws": "ws://localhost:4444",
+  "AutoSwitchPauseTime": "07:30",
+  "AutoSwitchPauseEnd": "18:00"
 }
