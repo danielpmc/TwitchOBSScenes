@@ -31,7 +31,7 @@ async function getRandomScene() {
 
 async function swapScene(scene) {
   try {
-    await obs.connect(config.obsws);
+    await obs.connect(config.obsws, config.obspasswd);
     console.log('Opening OBS Websocket to change scene!');
 
     await obs.call('SetCurrentProgramScene', { sceneName: scene });
