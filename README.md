@@ -22,7 +22,7 @@ To get started Theres a few things that need to be changed but first, Lets start
 ```bash
   npm i
 ```
-This will install all needed modules After this, rename example.config.json to config.json and change the values to what you need. Please note the interval is in minutes, this is for auto scene switching, CommandCooldown is in seconds. this is how fast commands can be ran to manually change scenes. After you have changed everything needed. you can start it with the following line
+This will install all needed modules After this, rename example.config.json to config.json and change the values to what you need. Please note the interval is in minutes, this is for auto scene switching, CommandCooldown is in seconds. this is how fast commands can be ran to manually change scenes. After you have changed everything needed. you can start it with the following line for AutoSwitchPauseTime is the time to start scene switching, and End is the time to stop the auto scene switching
 ```bash
   node index.js
 ```
