@@ -1,0 +1,8 @@
+{
+  "ChannelName": ["danielpmc2014"],
+  "CommandCooldown": 5,
+  "scenes": ["1", "2"],
+  "commandCooldown": 5,
+  "interval": 30,
+  "obsws": "ws://localhost:4444"
+}
