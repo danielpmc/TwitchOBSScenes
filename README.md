@@ -32,5 +32,7 @@ That's it! its now up and running, Give it a test by running !scene and then the
 
 - Add a channel points system so that users can pay using channel points to swap the scenes (With options to enable and disable this)
 
-- Add a config file to make it easier to get setup and running
+- Add a option to change what scenes are included to the auto scene switcher. 
+
+- Maybe add a auto scene switch off time based from current system time? With a option to enable and disable this
 
