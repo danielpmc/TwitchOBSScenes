@@ -12,6 +12,9 @@ let commandLastUsed = 0;
 
 const obs = new OBSWebSocket();
 
+// Flag to enable/disable random scene switching
+let enableRandom = false; // Initially disabled
+
 async function getRandomScene() {
   const randomIndex = Math.floor(Math.random() * sceneNames.length);
   return sceneNames[randomIndex];
@@ -42,13 +45,18 @@ client.on('chat', async (channel, userstate, message, self) => {
 
   // Handle command
   message = message.toLowerCase();
-  if (message.startsWith(COMMAND_NAME)) {
-    const scene = message.split(' ').slice(1).join(' ') || await getRandomScene(); // Get scene name or random
+  if (message.startsWith("!scene")) {
+    const scene = message.split(' ').slice(1).join(' ') || (enableRandom ? await getRandomScene() : ""); // Use random if enabled
+
     if (sceneNames.includes(scene)) {
       await swapScene(scene);
       console.log(`[OBS] (log): Switching to scene: ${scene}, command sent from ${userstate.username}.`);
       commandLastUsed = Date.now() / 1000;
     }
+  } else if (message.startsWith("!random")) {
+    // Toggle random scene switching
+    enableRandom = !enableRandom;
+    console.log(`[OBS] (log): Random scene switching ${enableRandom ? "enabled" : "disabled"}.`);
   }
 });
 
