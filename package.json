@@ -1,0 +1,16 @@
+{
+  "name": "TwitchOBSScene",
+  "version": "1.0.0",
+  "description": "Allows mods/broadcaster to switch scenes in OBS",
+  "main": "index.js",
+  "scripts": {
+    "test": "",
+    "start": "node index.js"
+  },
+  "author": "danielpmc",
+  "license": "none",
+  "dependencies": {
+    "obs-websocket-js": "^5.0.6",
+    "twitch-js": "^1.2.15"
+  }
+}
