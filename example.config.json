@@ -5,6 +5,7 @@
   "commandCooldown": 5,
   "interval": 30,
   "obsws": "ws://localhost:4444",
+  "obspasswd": "password for obs websocket",
   "AutoSwitchPauseTime": "07:30",
   "AutoSwitchPauseEnd": "18:00"
 }
