@@ -9,11 +9,16 @@ const sceneNames = ["1", "2"]; // Array of scene names
 const COMMAND_NAME = "!scene"; // Command to type in chat
 const COMMAND_COOLDOWN = 5; // Cooldown in seconds
 let commandLastUsed = 0;
+const AUTO_SCENE_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds (Auto scene switching)
 
 const obs = new OBSWebSocket();
 
 // Flag to enable/disable random scene switching
 let enableRandom = false; // Initially disabled
+
+// Flag to enable/disable auto scene switching
+let autoSceneEnabled = false; // Initially disabled
+let autoSceneInterval; // Variable to store the interval ID
 
 async function getRandomScene() {
   const randomIndex = Math.floor(Math.random() * sceneNames.length);
@@ -31,6 +36,15 @@ async function swapScene(scene) {
     console.log('Changed scene, Closing websocket!');
   } catch (err) {
     console.error('Error:', err);
+  }
+}
+
+// Function for auto scene switching
+async function autoSceneSwitch() {
+  if (autoSceneEnabled) { 
+    const scene = await getRandomScene(); // Choose a random scene
+    await swapScene(scene);
+    console.log(`[OBS] (log): Auto scene switching to ${scene}`);
   }
 }
 
@@ -57,6 +71,16 @@ client.on('chat', async (channel, userstate, message, self) => {
     // Toggle random scene switching
     enableRandom = !enableRandom;
     console.log(`[OBS] (log): Random scene switching ${enableRandom ? "enabled" : "disabled"}.`);
+  } else if (message.startsWith("!auto")) {
+    // Toggle auto scene switching
+    autoSceneEnabled = !autoSceneEnabled;
+    if (autoSceneEnabled) {
+      autoSceneInterval = setInterval(autoSceneSwitch, AUTO_SCENE_INTERVAL);
+      console.log(`[OBS] (log): Auto scene switching enabled, changing scenes every ${AUTO_SCENE_INTERVAL / 1000} seconds.`);
+    } else {
+      clearInterval(autoSceneInterval);
+      console.log(`[OBS] (log): Auto scene switching disabled.`);
+    }
   }
 });
 
