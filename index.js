@@ -1,15 +1,15 @@
 const { OBSWebSocket } = require('obs-websocket-js');
 const { Client } = require('twitch-js');
+const config = require('./config.json');
 
 const client = new Client({
-  channels: ['danielpmc2014'], // Use an array for channel names
+  channels: config.ChannelName, // Use an array for channel names
 });
 
-const sceneNames = ["1", "2"]; // Array of scene names
-const COMMAND_NAME = "!scene"; // Command to type in chat
-const COMMAND_COOLDOWN = 5; // Cooldown in seconds
+const sceneNames = config.scenes; // Array of scene names
+const COMMAND_COOLDOWN = config.commandCooldown; // Cooldown in seconds
 let commandLastUsed = 0;
-const AUTO_SCENE_INTERVAL = 30 * 60 * 1000; // 30 minutes in milliseconds (Auto scene switching)
+const AUTO_SCENE_INTERVAL = config.interval * 60 * 1000; // 30 minutes in milliseconds (Auto scene switching)
 
 const obs = new OBSWebSocket();
 
@@ -27,7 +27,7 @@ async function getRandomScene() {
 
 async function swapScene(scene) {
   try {
-    await obs.connect('ws://localhost:4444');
+    await obs.connect(config.obsws);
     console.log('Opening OBS Websocket to change scene!');
 
     await obs.call('SetCurrentProgramScene', { sceneName: scene });
