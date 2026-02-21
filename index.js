@@ -1,103 +1,149 @@
-const { OBSWebSocket } = require('obs-websocket-js');
-const { Client } = require('twitch-js');
+const OBSWebSocket = require('obs-websocket-js').default;
+const tmi = require('tmi.js');
 const config = require('./config.json');
 
-const client = new Client({
-  channels: config.ChannelName, // Use an array for channel names
+
+// OBS Auth
+const obs = new OBSWebSocket();
+let obsConnected = false;
+
+async function connectOBS() {
+  try {
+    await obs.connect(config.obsws, config.obspasswd);
+    obsConnected = true;
+    console.log('✅ Connected to OBS WebSocket');
+  } catch (error) {
+    console.error('❌ Failed to connect to OBS:', error.message);
+  }
+}
+
+obs.on('ConnectionClosed', () => {
+  console.log('⚠️ OBS disconnected. Reconnecting in 5 seconds...');
+  obsConnected = false;
+  setTimeout(connectOBS, 5000);
 });
 
-const sceneNames = config.scenes; // Array of scene names
-const COMMAND_COOLDOWN = config.commandCooldown; // Cooldown in seconds
+connectOBS();
+
+// Twitch Auth
+const twitchClient = new tmi.Client({
+  options: { debug: true },
+  connection: {
+    reconnect: true,
+    secure: true
+  },
+  channels: [config.ChannelName]
+});
+
+twitchClient.connect()
+    .then(() => console.log('✅ Connected to Twitch chat (anonymous)'))
+    .catch(err => console.error('❌ Twitch connection error:', err));
+
+//Config Options
+const sceneNames = config.scenes;
+const COMMAND_COOLDOWN = config.commandCooldown;
 let commandLastUsed = 0;
-const AUTO_SCENE_INTERVAL = config.interval * 60 * 1000; // 30 minutes in milliseconds (Auto scene switching)
+const AUTO_SCENE_INTERVAL = config.interval * 60 * 1000;
+let enableRandom = false;
+let autoSceneEnabled = false;
+let autoSceneInterval = null;
 
-const obs = new OBSWebSocket();
-
-// Flag to enable/disable random scene switching
-let enableRandom = false; // Initially disabled
-
-// Flag to enable/disable auto scene switching
-let autoSceneEnabled = false; // Initially disabled
-let autoSceneInterval; // Variable to store the interval ID
-
-// Config for pause functionality
-const PAUSE_START_TIME = config.AutoSwitchPauseTime; // Preset pause start time in HH:MM format
-const PAUSE_END_TIME = config.AutoSwitchPauseEnd; // Preset pause end time in HH:MM format 
-
-async function getRandomScene() {
+// Functions
+function getRandomScene() {
   const randomIndex = Math.floor(Math.random() * sceneNames.length);
   return sceneNames[randomIndex];
 }
 
 async function swapScene(scene) {
+  if (!obsConnected) {
+    console.log('⚠️ OBS not connected.');
+    return;
+  }
+
   try {
-    await obs.connect(config.obsws, config.obspasswd);
-    console.log('Opening OBS Websocket to change scene!');
-
     await obs.call('SetCurrentProgramScene', { sceneName: scene });
-
-    await obs.disconnect();
-    console.log('Changed scene, Closing websocket!');
+    console.log(`🎬 Scene changed to: ${scene}`);
   } catch (err) {
-    console.error('Error:', err);
+    console.error('❌ OBS Scene Change Error:', err.message);
   }
 }
 
-// Function for auto scene switching
-async function autoSceneSwitch() {
-  if (autoSceneEnabled && !isPausedByTime()) { 
-    const scene = await getRandomScene(); // Choose a random scene
-    await swapScene(scene);
-    console.log(`[OBS] (log): Auto scene switching to ${scene}`);
-  }
-}
-
+// Auto logic for scenes
 function isPausedByTime() {
-  const currentTime = new Date();
-  const currentHour = currentTime.getHours().toString().padStart(2, '0');
-  const currentMinute = currentTime.getMinutes().toString().padStart(2, '0');
-  const startTime = PAUSE_START_TIME.split(':');
-  const endTime = PAUSE_END_TIME.split(':');
+  const now = new Date();
 
-  // Check if current time is within the pause window
-  return (currentHour >= startTime[0] && currentHour <= endTime[0] &&
-         currentMinute >= startTime[1] && currentMinute <= endTime[1]);
+  const [startHour, startMinute] = config.AutoSwitchPauseTime.split(':').map(Number);
+  const [endHour, endMinute] = config.AutoSwitchPauseEnd.split(':').map(Number);
+
+  const start = new Date();
+  start.setHours(startHour, startMinute, 0);
+
+  const end = new Date();
+  end.setHours(endHour, endMinute, 0);
+
+  if (end < start) {
+    return now >= start || now <= end;
+  }
+
+  return now >= start && now <= end;
 }
 
-// Twitch chat listener
-client.on('chat', async (channel, userstate, message, self) => {
-  // Log message (optional)
-  //console.log(userstate);
+async function autoSceneSwitch() {
+  if (!autoSceneEnabled) return;
 
-  // Check for cooldown and permissions
+  if (isPausedByTime()) {
+    console.log('⏸ Auto switching paused (time window).');
+    return;
+  }
+
+  const scene = getRandomScene();
+  await swapScene(scene);
+  console.log(`[OBS] Auto switched to ${scene}`);
+}
+
+//Chat Listener / Logger
+twitchClient.on('message', async (channel, userstate, message, self) => {
+  if (self) return;
+
+  //console.log(`${userstate.username}: ${message}`);
+
+  // Cooldown check
   if (Date.now() / 1000 < commandLastUsed + COMMAND_COOLDOWN) return;
-  if (!(userstate.badges?.broadcaster || userstate.mod)) return;
 
-  // Handle command
   message = message.toLowerCase();
+
+// Commands
   if (message.startsWith("!scene")) {
-    const scene = message.split(' ').slice(1).join(' ') || (enableRandom ? await getRandomScene() : ""); // Use random if enabled
+    let scene = message.split(' ').slice(1).join(' ');
+
+    if (!scene && enableRandom) {
+      scene = getRandomScene();
+    }
 
     if (sceneNames.includes(scene)) {
       await swapScene(scene);
-      console.log(`[OBS] (log): Switching to scene: ${scene}, command sent from ${userstate.username}.`);
       commandLastUsed = Date.now() / 1000;
+    } else {
+      console.log('⚠ Invalid scene name.');
     }
-  } else if (message.startsWith("!random")) {
-    // Toggle random scene switching
+  }
+
+  else if (message.startsWith("!random")) {
     enableRandom = !enableRandom;
-    console.log(`[OBS] (log): Random scene switching ${enableRandom ? "enabled" : "disabled"}.`);
-  } else if (message.startsWith("!auto")) {
-    // Toggle auto scene switching
+    console.log(`🎲 Random mode ${enableRandom ? "ENABLED" : "DISABLED"}`);
+  }
+
+  else if (message.startsWith("!auto")) {
     autoSceneEnabled = !autoSceneEnabled;
+
     if (autoSceneEnabled) {
+      if (autoSceneInterval) clearInterval(autoSceneInterval);
       autoSceneInterval = setInterval(autoSceneSwitch, AUTO_SCENE_INTERVAL);
-      console.log(`[OBS] (log): Auto scene switching enabled, changing scenes every ${AUTO_SCENE_INTERVAL / 1000} seconds.`);
+      console.log(`🔁 Auto switching enabled (every ${config.interval} minutes).`);
     } else {
       clearInterval(autoSceneInterval);
-      console.log(`[OBS] (log): Auto scene switching disabled.`);
+      autoSceneInterval = null;
+      console.log('🛑 Auto switching disabled.');
     }
   }
 });
-
-client.connect();

@@ -10,7 +10,7 @@
   "author": "danielpmc",
   "license": "none",
   "dependencies": {
-    "obs-websocket-js": "^5.0.6",
-    "twitch-js": "^1.2.15"
+    "obs-websocket-js": "^5.0.7",
+    "tmi.js": "^1.8.5"
   }
 }
