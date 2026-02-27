@@ -1,5 +1,5 @@
 {
-  "ChannelName": ["danielpmc2014"],
+  "ChannelName": "danielpmc2014",
   "CommandCooldown": 5,
   "scenes": ["1", "2"],
   "commandCooldown": 5,
